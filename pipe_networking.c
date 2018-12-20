@@ -1,6 +1,5 @@
 #include "pipe_networking.h"
 
-
 /*=========================
   server_handshake
   args: int * to_client
@@ -19,18 +18,18 @@ int server_handshake(int *to_client) {
     int receiver = open("wakawaka", O_RDONLY);
 
     // read
-    char message[BUFFER_SIZE];
-    int r = read(receiver, message, BUFFER_SIZE);
-    printf("client msg 0: %s\n", msg);
+    char message[HANDSHAKE_BUFFER_SIZE];
+    int r = read(receiver, message, HANDSHAKE_BUFFER_SIZE);
+    printf("client msg 0: %s\n", message);
 
     remove("main");
     printf("removed wkp\n");
 
     // write
-    *to_client = open(message, BUFFER_SIZE);
-    int w = write(*to_client, message, BUFFER_SIZE);
-    r = read(receiver, message, BUFFER_SIZE);
-    printf("client msg 1: %s\n", msg);
+    *to_client = open(message, O_WRONLY);
+    int w = write(*to_client, ACK, HANDSHAKE_BUFFER_SIZE);
+    r = read(receiver, message, HANDSHAKE_BUFFER_SIZE);
+    printf("client msg 1: %s\n", message);
     
     return receiver;
 }
@@ -46,32 +45,33 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
-    char pipe[BUFFER_SIZE];
-    char buf[100];
-    pipe = itoa(getpid(), buf, 10);
-
+    char pipe[HANDSHAKE_BUFFER_SIZE];
+    sprintf(pipe, "%d", getpid());
+    
     int pWKP = mkfifo(pipe, 0644);
 
     *to_server = open("wakawaka", O_WRONLY);
     if (*to_server == -1) {
         printf("error %d %s\n", errno, strerror(errno));
+        remove(pipe);
+        return 1;
     }
 
     // write
-    int write = write(*to_server, pipe, BUFFER_SIZE);
+    int w = write(*to_server, pipe, HANDSHAKE_BUFFER_SIZE);
 
     int receiver = open(pipe, O_RDONLY);
 
     // receive
-    char message[BUFFER_SIZE];
-    int read = read(receiver, message, BUFFER_SIZE);
+    char message[HANDSHAKE_BUFFER_SIZE];
+    int r = read(receiver, message, HANDSHAKE_BUFFER_SIZE);
     printf("server msg: %s\n", message);
 
     // remove pipe
-    remove(pipe_name);
+    remove(pipe);
     printf("removed pipe\n");
 
-    write = write(*to_server, message, BUFFER_SIZE);
+    w = write(*to_server, ACK, HANDSHAKE_BUFFER_SIZE);
     
     return receiver;
 }
