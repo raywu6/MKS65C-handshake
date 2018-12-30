@@ -20,7 +20,7 @@ static void sighandler(int signo);
 
 void process(char *data);
 
-int server_handshake(int *to_client);
+int server_handshake(int from_client, int *to_client, char *message);
 
 int client_handshake(int *to_server);
 

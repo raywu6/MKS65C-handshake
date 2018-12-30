@@ -15,5 +15,6 @@ int main() {
         fgets(data, BUFFER_SIZE, stdin);
         write(to_server, data, BUFFER_SIZE);
         read(from_server, data, BUFFER_SIZE);
+        printf("%s\n", data); //client side message
     }
 }

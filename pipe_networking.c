@@ -9,29 +9,19 @@
 
   returns the file descriptor for the upstream pipe.
   =========================*/
-int server_handshake(int *to_client) {
-    // create WKP
-    int WKP = mkfifo("wakawaka", 0644);
-    printf("WKP created\n");
-
-    // open
-    int receiver = open("wakawaka", O_RDONLY);
-
-    // read
-    char message[HANDSHAKE_BUFFER_SIZE];
-    int r = read(receiver, message, HANDSHAKE_BUFFER_SIZE);
-    printf("client msg 0: %s\n", message);
-
-    remove("main");
-    printf("removed wkp\n");
-
-    // write
+int server_handshake(int from_client, int *to_client, char *message) {
     *to_client = open(message, O_WRONLY);
-    int w = write(*to_client, ACK, HANDSHAKE_BUFFER_SIZE);
-    r = read(receiver, message, HANDSHAKE_BUFFER_SIZE);
-    printf("client msg 1: %s\n", message);
+    int w = write(*to_client, message, HANDSHAKE_BUFFER_SIZE);
+    if (w == -1) {
+        printf("err %d: %s\n", errno, strerror(errno));
+    }
+    int r = read(from_client, message, HANDSHAKE_BUFFER_SIZE);
+    if (r == -1) {
+        printf("err %d: %s\n", errno, strerror(errno));
+    }
+    printf("handshake done\n");
     
-    return receiver;
+    return from_client;
 }
 
 
@@ -65,7 +55,7 @@ int client_handshake(int *to_server) {
     // receive
     char message[HANDSHAKE_BUFFER_SIZE];
     int r = read(receiver, message, HANDSHAKE_BUFFER_SIZE);
-    printf("server msg: %s\n", message);
+    printf("%s\n", message); // client handshake msg
 
     // remove pipe
     remove(pipe);
